@@ -10,12 +10,13 @@
 #include <sys/sendfile.h>
 #include <sys/stat.h>
 #include <time.h>
+#include <sys/file.h>
 
 #define PORT 8017
 #define IP "127.0.0.1"
 
 #define MAX_PATH 1024
-#define MAX_NO_THREADS 2
+#define MAX_NO_THREADS 10
 #define SERVER_DIR "/home/razvan/Desktop/TEMA2/files"
 #define LOG_FILE_PATH "/home/razvan/Desktop/TEMA2/logger.log"
 
@@ -36,6 +37,7 @@ int server_cleanup();
 void lsrec_getsize(char *dir, uint32_t *size);
 void lsrec_setbuff(char *dir, char *buffer, uint32_t *offset);
 
+void clear_socket_buffer(int socket);
 int list(int socket);
 int download(int socket);
 int upload(int socket);

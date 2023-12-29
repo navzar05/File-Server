@@ -71,32 +71,38 @@ void *thread_quit(void *args) {
     return NULL;
 }
 
-int log_operation(const char* operation, const char* filename, const char* word_searched)
-{
-        pthread_mutex_lock(&mutex_log);
+int log_operation(const char* operation, const char* filename, const char* word_searched) {
+    int fd = open(LOG_FILE_PATH, O_WRONLY | O_CREAT | O_APPEND, 0644);
 
-        time_t t = time(NULL);
-        struct tm tm = *localtime(&t);
+    if (fd == -1) {
+        perror("Error opening logging file");
+        return -1;
+    }
 
-        FILE* fp = fopen(LOG_FILE_PATH, "a");
+    if (flock(fd, LOCK_EX) == -1) {
+        perror("Error acquiring file lock");
+        close(fd);
+        return -1;
+    }
 
-        if (fp == 0) {
-                fprintf(stderr, "Error on opening logging file.\n");
-                return -1;
-        }
+    time_t t = time(NULL);
+    struct tm tm = *localtime(&t);
 
-        // printf("now: %d-%02d-%02d %02d:%02d:%02d\n", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
+    if (strncmp(operation, "LIST", 4) == 0)
+        dprintf(fd, "%d-%02d-%02d, %02d:%02d, %s\n", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,tm.tm_hour, tm.tm_min, operation);
+    else if (strncmp(operation, "SEARCH", 6) == 0)
+        dprintf(fd, "%d-%02d-%02d, %02d:%02d, %s, %s\n", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,tm.tm_hour, tm.tm_min, operation, word_searched);
+    else
+        dprintf(fd, "%d-%02d-%02d, %02d:%02d, %s, %s\n", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,tm.tm_hour, tm.tm_min, operation, filename);
 
-        if (strncmp(operation, "LIST", 4) == 0)
-                fprintf(fp, "%d-%02d-%02d, %02d:%02d, %s\n", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,tm.tm_hour, tm.tm_min, operation);
-        else if (strncmp(operation, "SEARCH", 6) == 0)
-                fprintf(fp, "%d-%02d-%02d, %02d:%02d, %s, %s\n", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,tm.tm_hour, tm.tm_min, operation, word_searched);
-        else
-                fprintf(fp, "%d-%02d-%02d, %02d:%02d, %s, %s\n", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,tm.tm_hour, tm.tm_min, operation, filename);
-        fclose(fp);
+    if (flock(fd, LOCK_UN) == -1) {
+        perror("Error releasing file lock");
+        close(fd);
+        return -1;
+    }
 
-        pthread_mutex_unlock(&mutex_log);
-        return 0;
+    close(fd);
+    return 0;
 }
 
 int server_init(int* listenSock)
@@ -291,20 +297,12 @@ int download(int socket)
         char* path = NULL;
         char* real_path = NULL;
 
-        if (receive_uint32(socket, &size) <= 0) {
-                send_uint32(socket, S_UNDEFINED_ERR);
-                return -1;
-        }
+        receive_uint32(socket, &size) <= 0;
 
         printf("size: %d\n", size);
 
         path = (char*)calloc(size, sizeof(char));
         real_path = (char*)calloc(size + sizeof("./files/"), sizeof(char));
-
-        if (path == NULL) {
-                send_uint32(socket, S_OUT_OF_MEM);
-                return -1;
-        }
 
         receive_data(socket, path, size);
 
@@ -352,10 +350,7 @@ int upload(int socket)
         char* real_path = NULL;
         uint32_t file_size = 0;
 
-        if (receive_uint32(socket, &path_size) <= 0) {
-                send_uint32(socket, S_UNDEFINED_ERR);
-                return -1;
-        }
+        receive_uint32(socket, &path_size) <= 0;
 
         printf("path size: %d\n", path_size);
 
@@ -363,10 +358,7 @@ int upload(int socket)
 
         real_path = (char*)calloc(path_size + sizeof("./files/"), sizeof(char));
 
-        if (receive_data(socket, path, path_size) <= 0) {
-                send_uint32(socket, S_UNDEFINED_ERR);
-                return -1;
-        }
+        receive_data(socket, path, path_size);
 
         generateRealPath(path, real_path);
 
@@ -376,16 +368,17 @@ int upload(int socket)
 
         int fd = open(real_path, O_RDWR);
 
-        if (fd < 0) {
-                send_uint32(socket, S_UNDEFINED_ERR);
-                return -1;
-        }
-
         receive_uint32(socket, &file_size);
 
         printf("file size = %d\n", file_size);
 
         receive_data_to_file(socket, fd, file_size);
+
+        if (fd < 0) {
+                send_uint32(socket, S_UNDEFINED_ERR);
+                return -1;
+        }
+
 
         send_uint32(socket, S_SUCCES);
 
@@ -406,19 +399,11 @@ int delete(int socket)
         char* path = NULL;
         char* real_path = NULL;
 
-        if (receive_uint32(socket, &path_size) <= 0){
-                send_uint32(socket, S_UNDEFINED_ERR);
-                return -1;
-        }
+        if (receive_uint32(socket, &path_size) <= 0);
 
         path = (char*)calloc(path_size, sizeof(char));
 
         real_path = (char*)calloc(path_size + sizeof("./files/"), sizeof(char));
-
-        if (path == NULL) {
-                send_uint32(socket, S_UNDEFINED_ERR);
-                return -1;
-        }
 
         receive_data(socket, path, path_size);
 
@@ -449,10 +434,7 @@ int move(int socket)
         char* real_path_src = NULL;
         char* real_path_dest = NULL;
 
-        if (receive_uint32(socket, &size_src) <= 0) {
-                // send_uint32(socket, S_UNDEFINED_ERR);
-                return -1;
-        }
+        if (receive_uint32(socket, &size_src) <= 0);
 
         src = (char*)calloc(size_src, sizeof(char));
 
@@ -462,10 +444,7 @@ int move(int socket)
 
         generateRealPath(src, real_path_src);
 
-        if (receive_uint32(socket, &size_dest) <= 0) {
-                // send_uint32(socket, S_UNDEFINED_ERR);
-                return -1;
-        }
+        if (receive_uint32(socket, &size_dest) <= 0);
 
         dest = (char*)calloc(size_dest, sizeof(char));
 
@@ -490,7 +469,6 @@ int move(int socket)
         send_uint32(socket, S_SUCCES);
 
         log_operation("MOVE", src, NULL);
-
 
         free(src);
         free(dest);

@@ -129,20 +129,22 @@ int main()
 
         // move
 
-        /* move(socketfd ,"./downloads/salut.txt", "./salut.txt"); */
+        move(socketfd ,"./downloads/salut.txt", "./salut.txt");
 
         // update
 
         printf("Update\n");
-        update(socketfd, "./downloads/salut.txt", 10, "TEXT MODIFICAT");
+        update(socketfd, "./downloads/salut1.txt", 10, "TEXT MODIFICAT");
         sleep(1);
         printf("Update\n");
         update(socketfd, "./downloads/salut2.txt", 10, "TEXT MODIFICAT");
         sleep(1);
+        printf("Move\n");
+        move(socketfd, "abdc", "abcd");
         printf("Update\n");
-        update(socketfd, "./downloads/salut.txt", 10, "TEXT MODIFICAT");
+        update(socketfd, "./downloads/salut1.txt", 10, "TEXT MODIFICAT");
         printf("Update\n");
-        update(socketfd, "./downloads/salut.txt", 20, "TEXT MODIFICAT1");
+        update(socketfd, "./downloads/salut1.txt", 20, "TEXT MODIFICAT1");
 
 
         close(socketfd);
