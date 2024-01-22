@@ -95,23 +95,26 @@ void _mkdir(const char *dir) {
     mkdir(tmp, S_IRWXU);
 }
 
-void createFileWithDirectories(const char *filePath)
+int createFileWithDirectories(const char *filePath)
 {
     char *dirPath = extractDirPath(filePath);
 
-    printf("%s\n", dirPath);
+    // printf("%s\n", dirPath);
 
     _mkdir(dirPath);
 
     free(dirPath);
 
-    int file = open(filePath, O_CREAT | O_EXCL, 0666);
-    if (file != NULL)
+    int file = open(filePath, O_CREAT | O_EXCL | O_RDWR, 0666);
+
+    if (file >= 0)
     {
         fprintf(stderr, "File created: %s\n", filePath);
+        return file;
     }
     else
     {
         fprintf(stderr, "Error creating the file: %s\n", filePath);
+        return -1;
     }
 }

@@ -1,40 +1,159 @@
-2023-12-29, 18:48, UPDATE, ./downloads/salut.txt
-2023-12-29, 18:50, UPDATE, ./downloads/salut.txt
-2023-12-29, 18:51, LIST
-2023-12-29, 18:51, UPDATE, ./downloads/salut.txt
-2023-12-29, 18:52, LIST
-2023-12-29, 18:52, UPDATE, ./downloads/salut.txt
-2023-12-29, 18:52, UPDATE, ./downloads/salut.txt
-2023-12-29, 18:52, LIST
-2023-12-29, 18:52, UPDATE, ./downloads/salut.txt
-2023-12-29, 18:52, UPDATE, ./downloads/salut.txt
-2023-12-29, 18:52, UPDATE, ./downloads/salut.txt
-2023-12-29, 18:52, UPDATE, ./downloads/salut.txt
-2023-12-29, 18:53, LIST
-2023-12-29, 18:53, UPDATE, ./downloads/salut.txt
-2023-12-29, 18:54, LIST
-2023-12-29, 18:54, UPDATE, ./downloads/salut.txt
-2023-12-29, 18:56, LIST
-2023-12-29, 18:56, UPDATE, ./downloads/salut.txt
-2023-12-29, 18:56, LIST
-2023-12-29, 18:56, UPDATE, ./downloads/salut.txt
-2023-12-29, 18:58, LIST
-2023-12-29, 18:58, UPDATE, ./downloads/salut.txt
-2023-12-29, 19:03, LIST
-2023-12-29, 19:03, UPDATE, ./downloads/salut.txt
-2023-12-29, 19:12, LIST
-2023-12-29, 19:15, LIST
-2023-12-29, 19:17, LIST
-2023-12-29, 19:22, LIST
-2023-12-29, 19:25, LIST
-2023-12-29, 19:25, UPDATE, ./downloads/salut.txt
-2023-12-29, 19:25, UPDATE, ./downloads/salut.txt
-2023-12-29, 19:25, UPDATE, ./downloads/salut.txt
-2023-12-29, 19:27, LIST
-2023-12-29, 19:27, UPDATE, ./downloads/salut.txt
-2023-12-29, 19:27, UPDATE, ./downloads/salut.txt
-2023-12-29, 19:27, UPDATE, ./downloads/salut.txt
-2023-12-29, 19:28, LIST
-2023-12-29, 19:28, UPDATE, ./downloads/salut.txt
-2023-12-29, 19:28, UPDATE, ./downloads/salut.txt
-2023-12-29, 19:28, UPDATE, ./downloads/salut.txt
+2024-01-21, 13:51, LIST
+2024-01-21, 13:51, UPLOAD, ./Makefile
+2024-01-21, 13:51, LIST
+2024-01-21, 13:53, LIST
+2024-01-21, 13:53, SEARCH, Ana
+2024-01-21, 16:34, LIST
+2024-01-21, 16:34, SEARCH, Ana
+2024-01-21, 16:35, LIST
+2024-01-21, 16:35, SEARCH, Ana
+2024-01-21, 16:35, LIST
+2024-01-21, 16:35, UPDATE, /bin/file_client.txt
+2024-01-21, 16:37, LIST
+2024-01-21, 16:37, UPDATE, /bin/file_client.txt
+2024-01-21, 16:38, LIST
+2024-01-21, 16:38, LIST
+2024-01-21, 16:38, LIST
+2024-01-21, 16:38, LIST
+2024-01-21, 16:38, LIST
+2024-01-21, 16:38, LIST
+2024-01-21, 16:38, LIST
+2024-01-21, 16:38, UPLOAD, ./Makefile
+2024-01-21, 16:39, LIST
+2024-01-21, 16:39, LIST
+2024-01-21, 16:39, UPLOAD, ./Makefile
+2024-01-21, 16:39, LIST
+2024-01-21, 16:40, LIST
+2024-01-21, 16:40, UPLOAD, ./Makefile
+2024-01-21, 16:41, LIST
+2024-01-21, 16:41, LIST
+2024-01-21, 16:41, UPLOAD, ./Makefile
+2024-01-21, 16:44, LIST
+2024-01-21, 16:44, LIST
+2024-01-21, 16:44, UPLOAD, ./Makefile
+2024-01-21, 16:44, LIST
+2024-01-21, 16:44, UPLOAD, ./Makefile
+2024-01-21, 16:46, LIST
+2024-01-21, 16:46, UPLOAD, ./Makefile
+2024-01-21, 16:56, LIST
+2024-01-21, 16:56, LIST
+2024-01-21, 16:56, UPLOAD, ./Makefile
+2024-01-21, 17:01, LIST
+2024-01-21, 17:01, LIST
+2024-01-21, 17:01, UPLOAD, ./Makefile
+2024-01-21, 17:02, LIST
+2024-01-21, 17:52, LIST
+2024-01-21, 18:18, LIST
+2024-01-21, 18:18, LIST
+2024-01-21, 18:18, UPLOAD, ./Makefile
+2024-01-21, 18:20, LIST
+2024-01-21, 18:20, UPDATE, /bin/file_client.txt
+2024-01-21, 18:23, LIST
+2024-01-21, 18:23, UPDATE, /bin/file_client.txt
+2024-01-21, 18:23, LIST
+2024-01-21, 18:23, UPDATE, /bin/file_client.txt
+2024-01-22, 13:21, LIST
+2024-01-22, 13:21, UPDATE, /bin/file_client.txt
+2024-01-22, 13:25, LIST
+2024-01-22, 13:25, UPDATE, /bin/file_client.txt
+2024-01-22, 13:25, LIST
+2024-01-22, 13:25, UPDATE, /bin/file_client.txt
+2024-01-22, 13:25, LIST
+2024-01-22, 13:25, UPDATE, /bin/file_client.txt
+2024-01-22, 13:25, LIST
+2024-01-22, 13:25, UPDATE, /bin/file_client.txt
+2024-01-22, 13:25, LIST
+2024-01-22, 13:25, UPDATE, /bin/file_client.txt
+2024-01-22, 13:25, LIST
+2024-01-22, 13:25, UPDATE, /bin/file_client.txt
+2024-01-22, 13:25, LIST
+2024-01-22, 13:25, UPDATE, /bin/file_client.txt
+2024-01-22, 13:25, LIST
+2024-01-22, 13:25, UPDATE, /bin/file_client.txt
+2024-01-22, 13:25, LIST
+2024-01-22, 13:25, UPDATE, /bin/file_client.txt
+2024-01-22, 13:25, LIST
+2024-01-22, 13:25, UPDATE, /bin/file_client.txt
+2024-01-22, 13:26, LIST
+2024-01-22, 13:26, UPDATE, /bin/file_client.txt
+2024-01-22, 13:26, LIST
+2024-01-22, 13:26, UPDATE, /bin/file_client.txt
+2024-01-22, 13:26, LIST
+2024-01-22, 13:26, UPDATE, /bin/file_client.txt
+2024-01-22, 13:26, LIST
+2024-01-22, 13:26, UPDATE, /bin/file_client.txt
+2024-01-22, 13:26, LIST
+2024-01-22, 13:26, UPDATE, /bin/file_client.txt
+2024-01-22, 13:26, LIST
+2024-01-22, 13:26, UPDATE, /bin/file_client.txt
+2024-01-22, 13:26, LIST
+2024-01-22, 13:26, UPDATE, /bin/file_client.txt
+2024-01-22, 13:26, LIST
+2024-01-22, 13:26, UPDATE, /bin/file_client.txt
+2024-01-22, 13:26, LIST
+2024-01-22, 13:26, UPDATE, /bin/file_client.txt
+2024-01-22, 13:26, LIST
+2024-01-22, 13:26, UPDATE, /bin/file_client.txt
+2024-01-22, 13:27, LIST
+2024-01-22, 13:27, UPDATE, /bin/file_client.txt
+2024-01-22, 13:27, LIST
+2024-01-22, 13:27, UPDATE, /bin/file_client.txt
+2024-01-22, 13:29, LIST
+2024-01-22, 13:29, UPDATE, /bin/file_client.txt
+2024-01-22, 13:29, LIST
+2024-01-22, 13:29, UPDATE, /bin/file_client.txt
+2024-01-22, 13:29, LIST
+2024-01-22, 13:29, UPDATE, /bin/file_client.txt
+2024-01-22, 13:29, LIST
+2024-01-22, 13:29, UPDATE, /bin/file_client.txt
+2024-01-22, 13:29, LIST
+2024-01-22, 13:29, UPDATE, /bin/file_client.txt
+2024-01-22, 13:29, LIST
+2024-01-22, 13:29, UPDATE, /bin/file_client.txt
+2024-01-22, 13:29, LIST
+2024-01-22, 13:29, UPDATE, /bin/file_client.txt
+2024-01-22, 13:29, LIST
+2024-01-22, 13:29, UPDATE, /bin/file_client.txt
+2024-01-22, 13:29, LIST
+2024-01-22, 13:29, UPDATE, /bin/file_client.txt
+2024-01-22, 13:29, LIST
+2024-01-22, 13:29, UPDATE, /bin/file_client.txt
+2024-01-22, 13:29, LIST
+2024-01-22, 13:29, UPDATE, /bin/file_client.txt
+2024-01-22, 13:29, LIST
+2024-01-22, 13:29, UPDATE, /bin/file_client.txt
+2024-01-22, 13:29, LIST
+2024-01-22, 13:29, UPDATE, /bin/file_client.txt
+2024-01-22, 13:38, LIST
+2024-01-22, 13:38, UPDATE, /bin/file_client.txt
+2024-01-22, 13:39, LIST
+2024-01-22, 13:39, UPDATE, /bin/file_client.txt
+2024-01-22, 14:16, LIST
+2024-01-22, 14:16, UPDATE, /bin/file_client.txt
+2024-01-22, 14:17, LIST
+2024-01-22, 14:17, UPDATE, /bin/file_client.txt
+2024-01-22, 14:18, LIST
+2024-01-22, 14:18, UPDATE, /bin/file_client.txt
+2024-01-22, 14:18, LIST
+2024-01-22, 14:18, UPDATE, /bin/file_client.txt
+2024-01-22, 14:18, LIST
+2024-01-22, 14:18, UPDATE, /bin/file_client.txt
+2024-01-22, 14:23, LIST
+2024-01-22, 14:23, UPDATE, /bin/file_client.txt
+2024-01-22, 14:27, LIST
+2024-01-22, 14:27, DELETE, ./Makefile
+2024-01-22, 14:27, LIST
+2024-01-22, 14:27, UPDATE, /bin/file_client.txt
+2024-01-22, 14:28, LIST
+2024-01-22, 14:28, DOWNLOAD, ./downloads/salut.txt
+2024-01-22, 14:28, LIST
+2024-01-22, 14:28, UPLOAD, ./Makefile
+2024-01-22, 14:28, UPDATE, /bin/file_client.txt
+2024-01-22, 14:28, SEARCH, Ana
+2024-01-22, 14:29, LIST
+2024-01-22, 14:29, DOWNLOAD, ./downloads/salut.txt
+2024-01-22, 14:29, DELETE, ./Makefile
+2024-01-22, 14:29, LIST
+2024-01-22, 14:29, UPLOAD, ./Makefile
+2024-01-22, 14:29, UPDATE, /bin/file_client.txt
+2024-01-22, 14:29, SEARCH, Ana
