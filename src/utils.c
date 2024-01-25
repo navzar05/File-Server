@@ -1,10 +1,6 @@
 #include "utils.h"
+#define MAX_PATH 1024
 
-/*
-    Functiile de trimitere si repceptionare sunt inspirate de aici:
-    https://stackoverflow.com/questions/9140409/transfer-integer-over-a-socket-in-c
-
-*/
 
 int send_data(int sockfd, const void *buffer, size_t bufsize)
 {
@@ -123,4 +119,66 @@ int createFileWithDirectories(const char *filePath)
         fprintf(stderr, "Error creating the file: %s\n", filePath);
         return -1;
     }
+}
+
+void lsrec_getsize(char *dir, uint32_t *size)
+{
+   char path[MAX_PATH];
+   struct dirent *dp;
+   DIR *dfd;
+
+   if ((dfd = opendir(dir)) == NULL) {
+      fprintf(stderr, "lsrec: can't open %s\n", dir);
+      return;
+   }
+
+   while ((dp = readdir(dfd)) != NULL) {
+        if (dp->d_type == 4){ // #define DT_DIR 4
+                path[0] = '\0';
+                if (strcmp(dp->d_name, ".") == 0 ||
+                strcmp(dp->d_name, "..") == 0)
+                        continue;
+                sprintf(path, "%s/%s", dir, dp->d_name);
+                lsrec_getsize(path, size);
+        }
+        else{
+                // printf("%s/%s size = %d\n", dir, dp->d_name, strlen(dir) + strlen(dp->d_name) + 2);
+                (*size) += strlen(dir) + strlen(dp->d_name) + 2;
+        }
+      }
+   closedir(dfd);
+}
+
+void lsrec_setbuff_helper(const char *dir, char *buffer, size_t *offset) {
+    char path[MAX_PATH];
+    struct dirent *dp;
+    DIR *dfd;
+
+    if ((dfd = opendir(dir)) == NULL) {
+        fprintf(stderr, "lsrec: can't open %s\n", dir);
+        return;
+    }
+
+    while ((dp = readdir(dfd)) != NULL) {
+        if (dp->d_type == 4) {
+            path[0] = '\0';
+            if (strcmp(dp->d_name, ".") == 0 ||
+                strcmp(dp->d_name, "..") == 0)
+                continue;
+            sprintf(path, "%s/%s", dir, dp->d_name);
+            lsrec_setbuff_helper(path, buffer, offset);
+        } else {
+            strncat(buffer + (*offset), dir, MAX_PATH - 1);
+            strcat(buffer + (*offset), "/");
+            strncat(buffer + (*offset), dp->d_name, MAX_PATH - 1 - strlen(dir) - 2);
+            strcat(buffer + (*offset), "\0");
+            (*offset) += strlen(buffer + (*offset)) + 1;
+        }
+    }
+    closedir(dfd);
+}
+
+void lsrec_setbuff(const char *dir, char *buffer) {
+    size_t offset = 0;
+    lsrec_setbuff_helper(dir, buffer, &offset);
 }

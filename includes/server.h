@@ -2,22 +2,13 @@
 #ifndef SERVER_H
 #define SERVER_H
 
-#define _XOPEN_SOURCE 500
 #include "utils.h"
-#include <dirent.h>
-#include <string.h>
-#include <ftw.h>
-#include <sys/sendfile.h>
-#include <sys/stat.h>
-#include <time.h>
-#include <sys/file.h>
-#include <ctype.h>
 
 #define INCREASE_RATIO 1.5
 #define DEFAULT_NO_WORDS 10
 #define MAX_WORDS 10
 #define MAX_WORD_LENGTH 100
-#define MAX_PATH 1024
+
 #define MAX_NO_THREADS 10
 #define ROOT_DIR "./files"
 #define LOG_FILE_PATH "./logger.log"
@@ -48,10 +39,6 @@ int log_operation(const char* operation, const char* filename, const char* word_
 int server_init(int* listenSock);
 int server_cleanup();
 int update_file_list();
-
-void lsrec_getsize(char *dir, uint32_t *size);
-void lsrec_setbuff_helper(const char *dir, char *buffer, size_t *offset);
-void lsrec_setbuff(const char *dir, char *buffer);
 
 int list(int socket);
 int download(int socket);

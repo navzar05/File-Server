@@ -14,11 +14,15 @@
 #include <stdio.h>
 #include <signal.h>
 #include <errno.h>
-#include <string.h>
 #include <stdlib.h>
-#include <sys/stat.h>
-#include <sys/types.h>
+#include <dirent.h>
+#include <string.h>
 #include <sys/sendfile.h>
+#include <sys/stat.h>
+#include <time.h>
+#include <sys/file.h>
+#include <ctype.h>
+
 
 #define PORT 8023
 #define IP "127.0.0.1"
@@ -42,6 +46,15 @@
 
 #define MAX_BUFFER 1024
 
+/*
+        Functiile de trimitere si repceptionare sunt inspirate de aici:
+        https://stackoverflow.com/questions/9140409/transfer-integer-over-a-socket-in-c
+
+        Functiile lsrec sunt inspirate de aici:
+        https://stackoverflow.com/questions/8436841/how-to-recursively-list-directories-in-c-on-linux
+
+*/
+
 int send_data(int sockfd, const void *buffer, size_t bufsize);
 int receive_data(int sockfd, void *buffer, size_t bufsize);
 int send_uint32(int sockfd, uint32_t data);
@@ -50,5 +63,8 @@ char* extractDirPath(const char *filePath);
 void _mkdir(const char *dir);
 int createFileWithDirectories(const char *filePath);
 int receive_data_to_file(int socket, int fd, size_t file_size);
+void lsrec_getsize(char *dir, uint32_t *size);
+void lsrec_setbuff_helper(const char *dir, char *buffer, size_t *offset);
+void lsrec_setbuff(const char *dir, char *buffer);
 
 #endif // UTILS_H

@@ -27,6 +27,18 @@ int listenSock = 0;
 void gracious_exit(pthread_t maintid)
 {
 
+        if (pthread_cancel(maintid) < 0) {
+                perror("failed to cancel main thread");
+        } else {
+                printf("Main thread canceled...\n");
+        }
+
+        if(close(listenSock) < 0) {
+                perror("failed to close listen sock");
+        } else {
+                printf("Listen socket closed...\n");
+        }
+
         while (index_of_threads > 0) {
                 // printf("waiting on %d job...\n", tids[index_of_threads - 1]);
                 pthread_join(tids[index_of_threads - 1], NULL);
@@ -34,20 +46,11 @@ void gracious_exit(pthread_t maintid)
 
         printf("All jobs finished...\n");
 
-        if(close(listenSock) < 0) {
-                perror("failed to close listen sock");
-        } else {
-                printf("Listen socket closed...\n");
-        }
+
         if (pthread_cancel(tid_index) < 0) {
                 perror("failed to cancel index thread");
         } else {
                 printf("Index thread canceled...\n");
-        }
-        if (pthread_cancel(maintid) < 0) {
-                perror("failed to cancel main thread");
-        } else {
-                printf("Main thread canceled...\n");
         }
 
         if (global_freq_list_size != 0) {
@@ -474,67 +477,7 @@ int server_cleanup()
         return 0;
 }
 
-void lsrec_getsize(char *dir, uint32_t *size)
-{
-   char path[MAX_PATH];
-   struct dirent *dp;
-   DIR *dfd;
 
-   if ((dfd = opendir(dir)) == NULL) {
-      fprintf(stderr, "lsrec: can't open %s\n", dir);
-      return;
-   }
-
-   while ((dp = readdir(dfd)) != NULL) {
-        if (dp->d_type == 4){ // #define DT_DIR 4
-                path[0] = '\0';
-                if (strcmp(dp->d_name, ".") == 0 ||
-                strcmp(dp->d_name, "..") == 0)
-                        continue;
-                sprintf(path, "%s/%s", dir, dp->d_name);
-                lsrec_getsize(path, size);
-        }
-        else{
-                // printf("%s/%s size = %d\n", dir, dp->d_name, strlen(dir) + strlen(dp->d_name) + 2);
-                (*size) += strlen(dir) + strlen(dp->d_name) + 2;
-        }
-      }
-   closedir(dfd);
-}
-
-void lsrec_setbuff_helper(const char *dir, char *buffer, size_t *offset) {
-    char path[MAX_PATH];
-    struct dirent *dp;
-    DIR *dfd;
-
-    if ((dfd = opendir(dir)) == NULL) {
-        fprintf(stderr, "lsrec: can't open %s\n", dir);
-        return;
-    }
-
-    while ((dp = readdir(dfd)) != NULL) {
-        if (dp->d_type == 4) {
-            path[0] = '\0';
-            if (strcmp(dp->d_name, ".") == 0 ||
-                strcmp(dp->d_name, "..") == 0)
-                continue;
-            sprintf(path, "%s/%s", dir, dp->d_name);
-            lsrec_setbuff_helper(path, buffer, offset);
-        } else {
-            strncat(buffer + (*offset), dir, MAX_PATH - 1);
-            strcat(buffer + (*offset), "/");
-            strncat(buffer + (*offset), dp->d_name, MAX_PATH - 1 - strlen(dir) - 2);
-            strcat(buffer + (*offset), "\0");
-            (*offset) += strlen(buffer + (*offset)) + 1;
-        }
-    }
-    closedir(dfd);
-}
-
-void lsrec_setbuff(const char *dir, char *buffer) {
-    size_t offset = 0;
-    lsrec_setbuff_helper(dir, buffer, &offset);
-}
 
 void generateRealPath(const char *relativePath, char *realPath)
 {
@@ -570,8 +513,6 @@ int update_file_list()
 int list(int socket)
 {
         DIR *dr = opendir(ROOT_DIR);
-
-
 
         if (dr == NULL) {
                 printf("Could not open current directory" );

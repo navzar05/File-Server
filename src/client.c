@@ -43,11 +43,11 @@ int main()
 
         list();
 
-        //upload("./Makefile");
+        upload("./Makefile");
 
         download("./Makefile");
 
-        update("/bin/file_client.txt", 13, " Ana ");
+        update("/bin/file_client.txt", 13, " #MODIFICARE#");
 
         search("Ana");
 
