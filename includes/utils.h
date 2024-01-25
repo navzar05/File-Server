@@ -1,6 +1,8 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#define _GNU_SOURCE
+
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <sys/types.h>
@@ -18,7 +20,8 @@
 #include <sys/types.h>
 #include <sys/sendfile.h>
 
-#define PATH_SEPARATOR '/'
+#define PORT 8023
+#define IP "127.0.0.1"
 
 #define OP_LIST 0x0ul
 #define OP_DOWNLOAD 0x1ul

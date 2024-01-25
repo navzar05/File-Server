@@ -6,8 +6,8 @@ pthread_mutex_t mutex_log = PTHREAD_MUTEX_INITIALIZER;
 // tid pentru thread-ul de indexare
 pthread_t tid_index = -1;
 
-extern size_t index_of_threads = 0;
-extern pthread_t tids[MAX_NO_THREADS] = { 0 };
+size_t index_of_threads = 0;
+pthread_t tids[MAX_NO_THREADS] = { 0 };
 pthread_mutex_t index_mutex = PTHREAD_MUTEX_INITIALIZER;
 // mutex pentru structura globala in care tin freq_list pentru fiecare fisier
 pthread_mutex_t mutex_freq_list = PTHREAD_MUTEX_INITIALIZER;
@@ -17,11 +17,23 @@ uint32_t global_freq_list_size = 0;
 // mutex si variabila conditionala pentru thread-ul de indexare
 pthread_mutex_t mutex_cont_exec = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t cond_var_cont_exec = PTHREAD_COND_INITIALIZER;
+pthread_mutex_t mutex_file_list = PTHREAD_MUTEX_INITIALIZER;
+
+char *file_list = NULL;
+uint32_t size_file_list = 0; // dimensiunea maxima
 
 int listenSock = 0;
 
 void gracious_exit(pthread_t maintid)
 {
+
+        while (index_of_threads > 0) {
+                // printf("waiting on %d job...\n", tids[index_of_threads - 1]);
+                pthread_join(tids[index_of_threads - 1], NULL);
+        }
+
+        printf("All jobs finished...\n");
+
         if(close(listenSock) < 0) {
                 perror("failed to close listen sock");
         } else {
@@ -49,6 +61,9 @@ void gracious_exit(pthread_t maintid)
                         }
                         free(global_freq_list);
         }
+
+        if (file_list != NULL)
+                free(file_list);
 
         pthread_cond_destroy(&cond_var_cont_exec);
 
@@ -83,7 +98,7 @@ void *thread_quit(void *args)
     epoll_ctl(epollfd, EPOLL_CTL_ADD, sfd, &ev);
 
     while (1) {
-        epoll_wait(epollfd, &retev, 2, -1);
+        epoll_wait(epollfd, &retev, 1, -1);
         if ((retev.events & EPOLLIN) != 0) {
             if (retev.data.fd == sfd) {
                 struct signalfd_siginfo si;
@@ -128,28 +143,25 @@ int isSeparator(const char ch) {
 
 int read_file(const int fd, char *buffer, const size_t size)
 {
-    ssize_t bytesRead;
-    size_t totalBytesRead = 0;
+        ssize_t bytesRead;
+        size_t totalBytesRead = 0;
 
-    while (totalBytesRead < size) {
-        bytesRead = read(fd, buffer + totalBytesRead, size - totalBytesRead);
+        while (totalBytesRead < size) {
+                bytesRead = read(fd, buffer + totalBytesRead, size - totalBytesRead);
 
-        // Check for end of file or an error
-        if (bytesRead == 0) { // End of file
-            break;
+                if (bytesRead == 0) {
+                        break;
+                }
+                if (bytesRead == -1) {
+                if (errno == EINTR)
+                        continue;
+                return -1;
+                }
+
+                totalBytesRead += bytesRead;
         }
-        if (bytesRead == -1) { // Error occurred
-            if (errno == EINTR) {
-                // The call was interrupted by a signal before any data was read; retry
-                continue;
-            }
-            return -1; // An actual error occurred
-        }
 
-        totalBytesRead += bytesRead;
-    }
-
-    return 0;
+        return 0;
 }
 
 int process_token(size_t *size, struct word_freq_map **map, const char *token) {
@@ -157,7 +169,7 @@ int process_token(size_t *size, struct word_freq_map **map, const char *token) {
 
         // printf("size: %d\n", (*size));
 
-        while (i < (*size) && ((*map)[i].word != NULL) && (token != NULL)) {
+        while (i < (*size) && (token != NULL)) {
 
                 if (strlen((*map)[i].word) == 0) {
                         strncpy((*map)[i].word, token, strlen(token));
@@ -176,8 +188,6 @@ int process_token(size_t *size, struct word_freq_map **map, const char *token) {
 
                 // Realocam memorie daca e nevoie
                 struct word_freq_map *temp_map = realloc(*map, (*size) * INCREASE_RATIO * sizeof(struct word_freq_map));
-
-                int j = i;
 
                 if (temp_map == NULL) {
                         perror("Memory reallocation failed");
@@ -251,11 +261,7 @@ int get_freq_list(const char* filename, const int index)
 
         qsort(file_word_map, size_file_word_map, sizeof(struct word_freq_map), compare_freq_map);
 
-        int i = 0;
-
         file_word_map = (struct word_freq_map*)realloc(file_word_map, DEFAULT_NO_WORDS * sizeof(struct word_freq_map));
-
-        i = 0;
 
         memcpy(global_freq_list[index].word_map, file_word_map, DEFAULT_NO_WORDS * sizeof(struct word_freq_map));
 
@@ -265,22 +271,25 @@ int get_freq_list(const char* filename, const int index)
 
         free(file_buffer);
 
+        close(fd);
+
 	return 0;
 }
 
 void *thread_index(void *args)
 {
-        char* paths = NULL;
         pthread_cond_init(&cond_var_cont_exec, NULL);
 
         while (1) {
 
-                uint32_t size_of_paths = -1;
+                // uint32_t size_of_paths = size_file_list;
 
                 char* current_path = NULL;
                 // char* current_data = NULL;
 
                 pthread_mutex_lock(&mutex_freq_list);
+
+                pthread_mutex_lock(&mutex_file_list);
 
                 if (global_freq_list_size != 0) {
                         int i = 0;
@@ -296,22 +305,22 @@ void *thread_index(void *args)
 
                 global_freq_list_size = 0;
 
-                lsrec_getsize(ROOT_DIR, &size_of_paths);
+                /* lsrec_getsize(ROOT_DIR, &size_of_paths);
 
                 paths = (char*)calloc(size_of_paths, sizeof(char));
 
-                lsrec_setbuff(ROOT_DIR, paths);
+                lsrec_setbuff(ROOT_DIR, paths); */
 
                 //calculam numarul de intrari in global_freq_map (egal cu numarul de fisiere)
 
-                current_path = paths;
+                current_path = file_list;
 
                 while (*current_path != '\0') {
                         global_freq_list_size++;
                         current_path += strlen(current_path) + 1;
                 }
 
-                printf("%d\n", global_freq_list_size);
+                // printf("%d\n", global_freq_list_size);
                 //alocam memoria necesara
 
                 global_freq_list = (struct freq_list*)calloc(global_freq_list_size, sizeof(struct freq_list));
@@ -322,32 +331,26 @@ void *thread_index(void *args)
 
                 //procesam fiecare fisier si adaugam intrarea corespunzatoare
 
-                current_path = paths;
+                current_path = file_list;
 
                 int i = 0;
 
-               //  printf("global: %d\n", global_freq_list_size);
+               // printf("global: %d\n", global_freq_list_size);
 
-                while (i < global_freq_list_size) {
+                while ( current_path != NULL && i < global_freq_list_size) {
                         // printf("Proc file %s\n", current_path);
                         get_freq_list(current_path, i);
                         i++;
                         current_path += strlen(current_path) + 1;
                 }
 
-                free(paths);
-
-                paths = NULL;
+                pthread_mutex_unlock(&mutex_file_list);
 
                 pthread_mutex_unlock(&mutex_freq_list);
 
                 pthread_mutex_lock(&mutex_cont_exec);
 
-                printf("%s", "Wait for cond variable\n");
-
                 pthread_cond_wait(&cond_var_cont_exec, &mutex_cont_exec);
-
-                printf("%s", "Continue executing\n");
 
                 pthread_mutex_unlock(&mutex_cont_exec);
 
@@ -356,9 +359,6 @@ void *thread_index(void *args)
         }
 
         pthread_cond_destroy(&cond_var_cont_exec);
-
-        if (paths != NULL)
-                free(paths);
 
 	return NULL;
 }
@@ -458,6 +458,8 @@ int server_init(int* listenSock)
 
         pthread_detach(tid_quit);
 
+        update_file_list();
+
 	pthread_create(&tid_index, NULL, thread_index, NULL);
 
         pthread_detach(tid_quit);
@@ -536,10 +538,7 @@ void lsrec_setbuff(const char *dir, char *buffer) {
 
 void generateRealPath(const char *relativePath, char *realPath)
 {
-    // Assuming that "./files/" is the prefix for the files
-
     if(relativePath[0] == '.' && relativePath[1] == '/') {
-        //printf("%s\n", relativePath + 2);
         snprintf(realPath, strlen(relativePath) + sizeof("./files/") - 2, "./files/%s", relativePath + 2);
     }
     else {
@@ -547,50 +546,60 @@ void generateRealPath(const char *relativePath, char *realPath)
     }
 }
 
+int update_file_list()
+{
+        pthread_mutex_lock(&mutex_file_list);
+
+        lsrec_getsize(ROOT_DIR, &size_file_list);
+
+        printf("list size %d\n", size_file_list);
+
+        if (file_list != NULL) {
+                free(file_list);
+                file_list = NULL;
+        }
+
+
+
+        file_list = (char*)calloc(size_file_list, sizeof(char));
+
+        lsrec_setbuff(ROOT_DIR, file_list);
+
+        pthread_mutex_unlock(&mutex_file_list);
+        return 0;
+}
+
 int list(int socket)
 {
-        struct dirent *de = NULL;
-        uint32_t size_to_send = 0;
-        uint32_t offset = 0;
         DIR *dr = opendir(ROOT_DIR);
-        char* buffer = NULL;
 
-        lsrec_getsize(ROOT_DIR, &size_to_send);
 
-        //printf("size_to_send: %d\n", size_to_send);
-
-        buffer = (char*)calloc(size_to_send, sizeof(char));
-
-        lsrec_setbuff(ROOT_DIR, buffer);
 
         if (dr == NULL) {
                 printf("Could not open current directory" );
                 return -1;
         }
 
-        const char *current = buffer;
+        if (file_list == NULL) {
+                update_file_list();
+        }
 
-/*         while (*current != '\0') {
-                printf("String: %s\n", current);
-                current += strlen(current) + 1;
-        } */
+        pthread_mutex_lock(&mutex_file_list);
 
         // send status
         send_uint32(socket, S_SUCCES);
 
         // send size of data
-        send_uint32(socket, size_to_send);
+        send_uint32(socket, size_file_list);
 
         // send data
-        send_data(socket, buffer, size_to_send);
+        send_data(socket, file_list, size_file_list);
+
+        pthread_mutex_unlock(&mutex_file_list);
 
         log_operation("LIST", NULL, NULL);
 
         closedir(dr);
-
-        free(buffer);
-
-        printf("GATA\n");
 
         return 0;
 }
@@ -602,23 +611,28 @@ int download(int socket)
         uint32_t size_to_send = 0;
         char* path = NULL;
         char* real_path = NULL;
+        int fd = -1;
 
         receive_uint32(socket, &size);
 
-        printf("size: %d\n", size);
+        if (size != -1)
+        {
+                path = (char*)calloc(size, sizeof(char));
+                real_path = (char*)calloc(size + sizeof("./files/"), sizeof(char));
 
-        path = (char*)calloc(size, sizeof(char));
-        real_path = (char*)calloc(size + sizeof("./files/"), sizeof(char));
+                receive_data(socket, path, size);
 
-        receive_data(socket, path, size);
+                // printf("path: %s\n", path);
 
-        printf("path: %s\n", path);
+                generateRealPath(path, real_path);
 
-        generateRealPath(path, real_path);
+                fd = open(real_path, O_RDONLY);
+        }
 
-        int fd = open(real_path, O_RDONLY);
-
-        printf("fd: %d\n", fd);
+        if (fd == -1 && size == -1) {
+                send_uint32(socket, S_BAD_ARGS);
+                return -1;
+        }
 
         if (fd < 0) {
                 send_uint32(socket, S_FILE_NOT_FOUND);
@@ -633,8 +647,6 @@ int download(int socket)
         struct stat buf;
         fstat(fd, &buf);
         size_to_send = buf.st_size;
-
-        printf("size_to_send: %d\n", size_to_send);
 
         send_uint32(socket, size_to_send);
 
@@ -660,9 +672,12 @@ int upload(int socket)
         char* real_path = NULL;
         uint32_t file_size = 0;
 
-        receive_uint32(socket, &path_size) <= 0;
+        receive_uint32(socket, &path_size);
 
-        // printf("path size: %d\n", path_size);
+        if (path_size == -1) {
+                send_uint32(socket, S_BAD_ARGS);
+                return -1;
+        }
 
         path = (char*)calloc(path_size, sizeof(char));
 
@@ -672,17 +687,12 @@ int upload(int socket)
 
         generateRealPath(path, real_path);
 
-        // printf("real path: %s\n", real_path);
 
         int fd = createFileWithDirectories(real_path);
-
-         /* = open(real_path, O_RDWR); */
 
         flock(fd, LOCK_SH);
 
         receive_uint32(socket, &file_size);
-
-        // printf("file size = %d\n", file_size);
 
         receive_data_to_file(socket, fd, file_size);
 
@@ -699,9 +709,12 @@ int upload(int socket)
         else
                 send_uint32(socket, S_SUCCES);
 
+        update_file_list();
+
         pthread_cond_signal(&cond_var_cont_exec);
 
         log_operation("UPLOAD", path, NULL);
+
 
         ERR_BAD_ARGS:
 
@@ -719,11 +732,16 @@ int upload(int socket)
 
 int delete(int socket)
 {
-        int path_size = 0;
+        uint32_t path_size = 0;
         char* path = NULL;
         char* real_path = NULL;
 
-        if (receive_uint32(socket, &path_size) <= 0);
+        receive_uint32(socket, &path_size);
+
+        if (path_size == -1) {
+                send_uint32(socket, S_BAD_ARGS);
+                return -1;
+        }
 
         path = (char*)calloc(path_size, sizeof(char));
 
@@ -739,6 +757,8 @@ int delete(int socket)
         }
 
         send_uint32(socket, S_SUCCES);
+
+        update_file_list();
 
         log_operation("DELETE", path, NULL);
 
@@ -760,7 +780,12 @@ int move(int socket)
         char* real_path_src = NULL;
         char* real_path_dest = NULL;
 
-        if (receive_uint32(socket, &size_src) <= 0);
+        receive_uint32(socket, &size_src);
+
+        if (size_src == -1) {
+                send_uint32(socket, S_BAD_ARGS);
+                return -1;
+        }
 
         src = (char*)calloc(size_src, sizeof(char));
 
@@ -770,7 +795,7 @@ int move(int socket)
 
         generateRealPath(src, real_path_src);
 
-        if (receive_uint32(socket, &size_dest) <= 0);
+        receive_uint32(socket, &size_dest);
 
         dest = (char*)calloc(size_dest, sizeof(char));
 
@@ -802,6 +827,8 @@ int move(int socket)
         rename(real_path_src, real_path_dest);
 
         send_uint32(socket, S_SUCCES);
+
+        update_file_list();
 
         log_operation("MOVE", src, NULL);
 
@@ -854,17 +881,17 @@ int update(int socket)
 
         if (access(real_path, F_OK) != 0) {
                 send_uint32(socket, S_FILE_NOT_FOUND);
-                // return -1;
+                return -1;
         }
 
         if (access(real_path, W_OK) != 0) {
                 send_uint32(socket, S_PERM_DENIED);
-                // return -1;
+                return -1;
         }
 
         if ((fd = open(real_path, O_RDWR)) < 0) {
                 send_uint32(socket, S_UNDEFINED_ERR);
-                // return -1;
+                return -1;
         }
 
         // printf("BEFORE LOCK\n");
@@ -908,9 +935,6 @@ int search(int socket)
 
         char *list_of_paths = NULL;
 
-        char **pointers_to_filenames = NULL;
-        size_t no_of_files = 0;
-
         uint32_t size_of_list = 0;
 
         size_t offset = 0;
@@ -926,12 +950,12 @@ int search(int socket)
 
         receive_data(socket, &word_to_find, size_of_word);
 
-        printf("%s\n", word_to_find);
+        // printf("%s\n", word_to_find);
 
         for (int i = 0; i < global_freq_list_size; i ++) {
-                for (int j = 0; j < DEFAULT_NO_WORDS; j ++)
-                        if (global_freq_list[i].word_map[j].word != NULL &&
-                         strcmp(word_to_find, global_freq_list[i].word_map[j].word) == 0) {
+                for (int j = 0; j < DEFAULT_NO_WORDS; j ++) {
+                        // printf("%d %d\n", i, j);
+                        if ( strcmp(word_to_find, global_freq_list[i].word_map[j].word) == 0) {
                                 /* // printf("found the word in %s\n", global_freq_list[i].filename);
                                 if (list_of_paths == NULL)
                                         list_of_paths = (char*)calloc(strlen(global_freq_list[i].filename) + 1, sizeof(char));
@@ -945,14 +969,15 @@ int search(int socket)
                                 size_of_list += strlen(global_freq_list[i].filename) + 1;
                                 break;
                         }
+                        printf("%d %d\n", i, j);
+                }
         }
 
         list_of_paths = (char*)calloc(size_of_list + 1, sizeof(char));
 
         for (int i = 0; i < global_freq_list_size; i ++) {
                 for (int j = 0; j < DEFAULT_NO_WORDS; j ++)
-                        if (global_freq_list[i].word_map[j].word != NULL &&
-                         strcmp(word_to_find, global_freq_list[i].word_map[j].word) == 0) {
+                        if ( strcmp(word_to_find, global_freq_list[i].word_map[j].word) == 0) {
                                 memcpy(list_of_paths + offset, global_freq_list[i].filename, strlen(global_freq_list[i].filename));
                                 offset += strlen(global_freq_list[i].filename) + 1;
                                 break;

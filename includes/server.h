@@ -13,9 +13,6 @@
 #include <sys/file.h>
 #include <ctype.h>
 
-#define PORT 8023
-#define IP "127.0.0.1"
-
 #define INCREASE_RATIO 1.5
 #define DEFAULT_NO_WORDS 10
 #define MAX_WORDS 10
@@ -50,12 +47,12 @@ int log_operation(const char* operation, const char* filename, const char* word_
 
 int server_init(int* listenSock);
 int server_cleanup();
+int update_file_list();
 
 void lsrec_getsize(char *dir, uint32_t *size);
 void lsrec_setbuff_helper(const char *dir, char *buffer, size_t *offset);
 void lsrec_setbuff(const char *dir, char *buffer);
 
-// void clear_socket_buffer(int socket);
 int list(int socket);
 int download(int socket);
 int upload(int socket);

@@ -1,5 +1,11 @@
 #include "utils.h"
 
+/*
+    Functiile de trimitere si repceptionare sunt inspirate de aici:
+    https://stackoverflow.com/questions/9140409/transfer-integer-over-a-socket-in-c
+
+*/
+
 int send_data(int sockfd, const void *buffer, size_t bufsize)
 {
     const char *pbuffer = (const char*) buffer;
@@ -70,7 +76,7 @@ int receive_uint32(int sockfd, uint32_t *data)
 
 char* extractDirPath(const char *filePath) {
     char *dirPath = strdup(filePath);
-    char *lastSlash = strrchr(dirPath, PATH_SEPARATOR);
+    char *lastSlash = strrchr(dirPath, '/');
     if (lastSlash != NULL) {
         *lastSlash = '\0';
     }

@@ -17,6 +17,8 @@ int update(const char* filename, const uint32_t offset, const char* data);
 
 int search(const char* word);
 
+void print_error(u_int32_t error_code);
+
 int main()
 {
         memset(&addr, 0, sizeof(struct sockaddr_in));
@@ -24,122 +26,70 @@ int main()
         addr.sin_port = htons(8023);
         addr.sin_addr.s_addr = inet_addr("127.0.0.1");
 
-/*         send_uint32(socketfd, OP_LIST);
-        sleep(1);
-        send_uint32(socketfd, OP_DOWNLOAD);
-        sleep(1);
-        send_uint32(socketfd, OP_SEARCH);
-        sleep(1);
-        send_uint32(socketfd, OP_MOVE);
-        sleep(1);
-        send_uint32(socketfd, OP_UPDATE);
-        sleep(1);
-        send_uint32(socketfd, OP_UPLOAD);
-        sleep(1);
-        send_uint32(socketfd, 0x23); */
+        // update("./downloads/salut.txt", 0, "MODIFICARE");
+        //search("dada");
 
-        // test on list
+        /* for (int i = 0; i < 1000; i ++) {
+                update("./downloads/salut.txt", 0, "MODIFICARE");
+                list();
+                usleep(100);
+        }
 
-        // list(socketfd);
-
-
-        // search("Ana");
+        delete("./downloads/salut1.txt"); */
 
         list();
 
-        download("./downloads/salut.txt");
-
-        delete("./Makefile");
+        // delete("./Makefile");
 
         list();
 
-        upload("./Makefile");
+        //upload("./Makefile");
+
+        download("./Makefile");
 
         update("/bin/file_client.txt", 13, " Ana ");
 
         search("Ana");
 
-        // update(socketfd, "./test.txt", 0, "Ana");
-
-        // search(socketfd, "Ana");
-
-        // valid test on download
-/*
-        sleep(1);
-
-        download(socketfd, "./salut.txt");
-
-        download(socketfd, "./salut.txt");
- */
-        // download(socketfd, "./salut.txt");
-
-        // test on upload
-
-        /* uint32_t status = -1;
-        uint32_t size_to_send = -1;
-        char path[] = "./bin/file_client.txt";
-        send_uint32(socketfd, OP_UPLOAD);
-
-        send_uint32(socketfd, sizeof(path));
-
-        send_data(socketfd, path, sizeof(path));
-
-        int fd = open(path, O_RDONLY);
-
-        if (fd < 0) {
-                printf("failed to open file.\n");
-        }
-
-        struct stat buf;
-        memset(&buf, 0, sizeof(struct stat));
-        fstat(fd, &buf);
-        size_to_send = buf.st_size;
-
-        printf("size to send = %d\n", size_to_send);
-
-        send_uint32(socketfd, size_to_send);
-
-        if (sendfile(socketfd, fd, NULL, size_to_send) < 0)
-                printf("ERROR ON SEND FILE\n");
-
-        receive_uint32(socketfd, &status);
-
-        if (status != S_SUCCES) {
-                printf("Error status: %x\n", status);
-        }
-
-
-        close(fd);
- */
-        // test on delete
-
-/*         send_uint32(socketfd, OP_DELETE);
-
-        send_uint32(socketfd, sizeof("./bin/file_client.txt"));
-
-        send_data(socketfd, "./bin/file_client.txt", sizeof("./bin/file_client.txt"));
- */
-
-        // move
-
-        // update(socketfd, "./salut.txt", 200, "Ana");
-
-        // move(socketfd ,"./downloads/salut1.txt", "./abcd/sss/salut.txt");
-
-        // update
-
-        /* printf("Update\n");
-        update(socketfd, "./downloads/salut1.txt", 10, "TEXT MODIFICAT");
-        sleep(1);
-        printf("Update\n");
-        update(socketfd, "./downloads/salut2.txt", 10, "TEXT MODIFICAT");
-        sleep(1);
-        printf("Update\n");
-        update(socketfd, "./downloads/salut.txt", 10, "TEXT MODIFICAT");
-        printf("Update\n");
-        update(socketfd, "./downloads/salut1.txt", 20, "TEXT MODIFICAT1"); */
-
         return 0;
+}
+
+void print_error(u_int32_t error_code)
+{
+        switch (error_code)
+        {
+        case S_BAD_ARGS:
+                fprintf(stderr, "Bad arguments.\n");
+                break;
+
+        case S_FILE_NOT_FOUND:
+                fprintf(stderr, "File not found.\n");
+                break;
+
+        case S_PERM_DENIED:
+                fprintf(stderr, "Permmsion denied.\n");
+                break;
+
+        case S_OUT_OF_MEM:
+                fprintf(stderr, "Out of memory.\n");
+                break;
+
+        case S_SERVER_BUSY:
+                fprintf(stderr, "Server busy.\n");
+                break;
+
+        case S_UNKNOWN_OP:
+                fprintf(stderr, "Unkown operation.\n");
+                break;
+
+        case S_UNDEFINED_ERR:
+                fprintf(stderr, "Undefined error.\n");
+                break;
+
+        default:
+                fprintf(stderr, "Bad error code.\n");
+                break;
+        }
 }
 
 int list()
@@ -151,7 +101,7 @@ int list()
         receive_uint32(socketfd, &status);
 
         if (status != 0)
-                fprintf(stderr, "Test on list failed.\n");
+                print_error(status);
         else {
                 uint32_t size;
                 char* buffer = NULL;
@@ -173,6 +123,20 @@ int list()
         return 0;
 }
 
+const char* get_filename_from_path(const char* path) {
+        const char* filename = strrchr(path, '/');
+        if (filename == NULL) {
+                filename = path;
+
+        } else {
+
+                filename++;
+
+        }
+
+        return filename;
+}
+
 int download(const char* filename)
 {
         int socketfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -180,11 +144,19 @@ int download(const char* filename)
         uint32_t status = -1;
         send_uint32(socketfd, OP_DOWNLOAD);
 
-        printf("%s %d\n", filename, strlen(filename));
+        uint32_t size = strlen(filename);
 
-        send_uint32(socketfd, strlen(filename));
+        if (size == 0) {
+                fprintf(stderr, "filename is empty\n");
+                size = -1;
+        }
 
-        send_data(socketfd, filename, strlen(filename));
+        printf("%s %d\n", filename, size);
+
+        send_uint32(socketfd, size);
+
+        if (size != -1)
+                send_data(socketfd, filename, size);
 
         receive_uint32(socketfd, &status);
 
@@ -200,9 +172,32 @@ int download(const char* filename)
                 receive_data(socketfd, buffer, size);
 
                 printf("buffer: %s\n", buffer);
+
+                int fd = -1;
+                int i = 0;
+                char filename_download[MAX_BUFFER] = { 0 };
+                char filename_download_unique[MAX_BUFFER] = { 0 };
+
+                strcpy(filename_download, get_filename_from_path(filename));
+                strcpy(filename_download_unique, filename_download);
+
+                while (fd < 0) {
+
+                        fd = open(filename_download_unique, O_EXCL | O_CREAT | O_WRONLY, 0600);
+                        if (fd < 0) {
+                                // fprintf(stderr, "File cannot be opened\n");
+                                snprintf(filename_download_unique, MAX_BUFFER + sizeof(int), "%s(%d)",
+                                filename_download, i);
+                                i ++;
+                        }
+                }
+
+                 write(fd, buffer, size);
+
+
         }
         else {
-                fprintf(stderr, "Failed to download");
+                print_error(status);
         }
         close(socketfd);
         return 0;
@@ -212,37 +207,47 @@ int upload(const char* path)
 {
         int socketfd = socket(AF_INET, SOCK_STREAM, 0);
         uint32_t size_to_send = -1;
+        int fd = -1;
 
         connect(socketfd, (struct sockaddr*)(&addr), sizeof(addr));
         uint32_t status = -1;
-        send_uint32(socketfd, OP_UPLOAD);
 
-        send_uint32(socketfd, strlen(path));
+        uint32_t size = strlen(path);
 
-        send_data(socketfd, path, strlen(path));
-
-        int fd = open(path, O_RDONLY);
-
-        if (fd < 0) {
-                printf("failed to open file.\n");
+        if (size == 0) {
+                fprintf(stderr, "Filename is empty.\n");
+                size = -1;
         }
 
-        struct stat buf;
-        memset(&buf, 0, sizeof(struct stat));
-        fstat(fd, &buf);
-        size_to_send = buf.st_size;
+        send_uint32(socketfd, OP_UPLOAD);
 
-        printf("size to send = %d\n", size_to_send);
+        send_uint32(socketfd, size);
 
-        send_uint32(socketfd, size_to_send);
+        if (size != -1) {
+                send_data(socketfd, path, size);
+                fd = open(path, O_RDONLY);
+        }
 
-        if (sendfile(socketfd, fd, NULL, size_to_send) < 0)
-                printf("ERROR ON SEND FILE\n");
+        if (fd >= 0) {
+
+                struct stat buf;
+                memset(&buf, 0, sizeof(struct stat));
+                fstat(fd, &buf);
+                size_to_send = buf.st_size;
+
+                printf("size to send = %d\n", size_to_send);
+
+                send_uint32(socketfd, size_to_send);
+
+                if (sendfile(socketfd, fd, NULL, size_to_send) < 0)
+                        printf("ERROR ON SEND FILE\n");
+
+        }
 
         receive_uint32(socketfd, &status);
 
         if (status != S_SUCCES) {
-                printf("Error status: %x\n", status);
+                print_error(status);
         }
 
         close(fd);
@@ -258,18 +263,31 @@ int delete(const char* filename)
         connect(socketfd, (struct sockaddr*)(&addr), sizeof(addr));
         uint32_t status = -1;
 
-        send_uint32(socketfd, OP_DELETE);
+        if (strlen(filename) == 0) {
+                send_uint32(socketfd, OP_DELETE);
 
-        send_uint32(socketfd, strlen(filename));
+                send_uint32(socketfd, -1);
 
-        send_data(socketfd, filename, strlen(filename));
+                receive_uint32(socketfd, &status);
 
-        receive_uint32(socketfd, &status);
+        }
+        else {
+                send_uint32(socketfd, OP_DELETE);
+
+                send_uint32(socketfd, strlen(filename));
+
+                send_data(socketfd, filename, strlen(filename));
+
+                receive_uint32(socketfd, &status);
+        }
+
+        close(socketfd);
 
         if (status != 0) {
-                fprintf(stderr, "Error on delete. %d\n", status);
+                print_error(status);
+                return -1;
         }
-        close(socketfd);
+        return 0;
 }
 
 int move(const char* src, const char* dest)
@@ -283,26 +301,33 @@ int move(const char* src, const char* dest)
         size_src = strlen(src);
         size_dest = strlen(dest);
 
+        send_uint32(socketfd, OP_MOVE);
+
         if (size_src <= 0 || size_dest <= 0) {
+                send_uint32(socketfd, -1);
+
+                receive_uint32(socketfd, &status);
+        }
+
+        else {
+                send_uint32(socketfd, size_src);
+
+                send_data(socketfd, src, size_src);
+
+                send_uint32(socketfd, size_dest);
+
+                send_data(socketfd, dest, size_dest);
+
+                receive_uint32(socketfd, &status);
+        }
+
+        close(socketfd);
+
+        if (status != 0) {
+                print_error(status);
                 return -1;
         }
 
-        send_uint32(socketfd, OP_MOVE);
-
-        send_uint32(socketfd, size_src);
-
-        send_data(socketfd, src, size_src);
-
-        send_uint32(socketfd, size_dest);
-
-        send_data(socketfd, dest, size_dest);
-
-        receive_uint32(socketfd, &status);
-
-        if (status != 0) {
-                fprintf(stderr, "Error on move. %d\n", status);
-        }
-        close(socketfd);
         return 0;
 }
 
@@ -332,7 +357,7 @@ int update(const char *filename, const uint32_t offset, const char *data)
         receive_uint32(socketfd, &status);
 
         if (status != 0) {
-                fprintf(stderr, "Error on upload. %d\n", status);
+                print_error(status);
         }
         close(socketfd);
         return 0;
@@ -342,8 +367,8 @@ int search(const char *word)
 {
         int socketfd = socket(AF_INET, SOCK_STREAM, 0);
         connect(socketfd, (struct sockaddr*)(&addr), sizeof(addr));
-        int status = -1;
-        int size = -1;
+        uint32_t status = -1;
+        uint32_t size = -1;
         char *paths = NULL;
 
         send_uint32(socketfd, OP_SEARCH);

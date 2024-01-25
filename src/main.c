@@ -7,13 +7,12 @@ extern pthread_t tids[MAX_NO_THREADS];
 extern size_t index_of_threads;
 
 
+
 void *thread_client(void *args)
 {
-        int sock = *((int*)args);
-
-        /* pthread_setspecific(commSock, args);
-        sock = *((int*)pthread_getspecific(commSock));
- */
+        int *aux = (int*)args;
+        pthread_setspecific(commSock, aux);
+        int sock = *((int*)pthread_getspecific(commSock));
         uint32_t op_code = -1;
 
         receive_uint32(sock, &op_code);
@@ -64,8 +63,17 @@ void *thread_client(void *args)
         return NULL;
 }
 
+void clean_auxsock(void *args)
+{
+        free((int*)args);
+}
+
 int main()
 {
+        int *auxsock;
+        auxsock = (int*)calloc(1, sizeof(int));
+        pthread_cleanup_push(clean_auxsock, auxsock);
+
         if (server_init(&listenSock) < 0) {
                 fprintf(stderr, "Error on server init.\n");
                 return -1;
@@ -76,31 +84,36 @@ int main()
         pthread_key_create(&commSock, NULL);
 
         while (1) {
-                int auxsock = accept(listenSock, NULL, NULL);
+                (*auxsock) = accept(listenSock, NULL, NULL);
+
 
                 if (index_of_threads == MAX_NO_THREADS) {
                         fprintf(stderr, "Maximum number of threads reached.\n");
-                        send_uint32(auxsock, S_SERVER_BUSY);
+                        send_uint32((*auxsock), S_SERVER_BUSY);
+                        close((*auxsock));
                         continue;
                 }
 
-                printf("New socket: %d\n", auxsock);
+                // printf("New socket: %d\n", (*auxsock));
 
-                if (auxsock < 0) {
+                if ((*auxsock) < 0) {
                         perror("accept error");
-                        return -1;
+                        continue;
                 }
+
+
+                pthread_create(&tids[index_of_threads], NULL, thread_client, auxsock);
+
                 pthread_mutex_lock(&index_mutex);
                 index_of_threads++;
                 pthread_mutex_unlock(&index_mutex);
-
-                printf("index_of_threads: %d\n", index_of_threads);
-
-                pthread_create(&tids[index_of_threads], NULL, thread_client, &auxsock);
-                pthread_detach(tids[index_of_threads]);
+                // pthread_detach(tids[index_of_threads]);
 
 
         }
+        pthread_key_delete(commSock);
+
+        pthread_cleanup_pop(1);
 
         return 0;
 }
