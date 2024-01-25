@@ -552,8 +552,6 @@ int update_file_list()
 
         lsrec_getsize(ROOT_DIR, &size_file_list);
 
-        printf("list size %d\n", size_file_list);
-
         if (file_list != NULL) {
                 free(file_list);
                 file_list = NULL;
@@ -969,7 +967,7 @@ int search(int socket)
                                 size_of_list += strlen(global_freq_list[i].filename) + 1;
                                 break;
                         }
-                        printf("%d %d\n", i, j);
+                        // printf("%d %d\n", i, j);
                 }
         }
 
